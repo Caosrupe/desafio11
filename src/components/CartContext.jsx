@@ -4,8 +4,8 @@ export const  CartContext=createContext({});
 export const CartProvider = ({children}) => {
 const[carts,setCarts]=useState([]);
 
-const  additem=({productname},{itemid},{count},{itemprice})=>{
-    setCarts([...carts,{itemid,productname,count,itemprice}]);
+const  additem=({title},{itemid},{count},{price})=>{
+    setCarts([...carts,{itemid,title,count,price}]);
     }
 
 

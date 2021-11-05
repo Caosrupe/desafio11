@@ -1,26 +1,54 @@
-import { Badge,Table} from 'react-bootstrap';
-import React, {useContext} from 'react';
+import {getFirestore} from '../firebase';
+import { Badge,Table,Button,InputGroup,FormControl} from 'react-bootstrap';
+import React, {useState,useEffect,useContext,createContext} from 'react';
 import {CartContext} from './CartContext';
-import { Link } from "react-router-dom";
-import DelButton from "./DelButton";
+import { Link } from 'react-router-dom';
+import DelButton from './DelButton';
+import firebase from 'firebase/app';
+import '@firebase/firestore';
+
+
 const Cart = () => {
+    const {carts,cartlength,clear,total,removeitem}=useContext(CartContext);
+    const [order,setOrder]=useState();
+    const [orderid,setOrderid]=useState();
+    const [error,setError]=useState();
+    const [email,setEmail]=useState();
+    const [phone,setPhone]=useState();
+    const [name,setName]=useState();
 
-const {carts,cartlength,total,}=useContext(CartContext);
-console.log("En carrito largo de carrito:"+cartlength());
+
+
+ function onPhoneChange(evt) { 
+    setPhone(evt.target.value);
+  }
+ function onNameChange(evt) {
+    setName(evt.target.value);
+  }
+ function onEmailChange(evt) {
+    setEmail(evt.target.value);
+  }
 
 
 
-    if(cartlength()>0){
 
+
+let goodarray=[];
 let copyarray=[];
-let goodarray=[]
 let ListTemplate;
 let i=0;
+    useEffect(()=>{
+setOrder(
+    {
+        buyer:{name,phone,email},
+        items:goodarray,
+        date:firebase.firestore.Timestamp.fromDate(new Date()),
+total:total()
+    }
+)
+    },[email] )
 
-
-
-
-
+    if(cartlength()>0){
 let itemidarray=[];
 
         while(i<carts.length)
@@ -39,12 +67,12 @@ itemidarray = [...new Set(itemidarray)];
         let name;
 while(i<itemidarray.length)
 {
-   let  sum=0;
+   let  cantidad=0;
     for (j=0;j<copyarray.length;j++)
     {
   if(copyarray[j].itemid==itemidarray[i])
         {
-sum=copyarray[j].count+sum;
+cantidad=copyarray[j].count+cantidad;
 price=copyarray[j].itemprice;
 name=copyarray[j].productname;
         }
@@ -52,7 +80,7 @@ name=copyarray[j].productname;
     }
 
 id=itemidarray[i];
-goodarray.push({id,name,sum,price})
+goodarray.push({id,name,cantidad,price})
 
 i++;
 }
@@ -61,9 +89,33 @@ i++;
 
 
 
-         ListTemplate=goodarray.map((element)=>(<tr key={element.id}><td>{element.name}</td><td>{element.sum}</td><td>{element.price}</td><td><DelButton itemid={id}/></td></tr>));
+
+    const  InsertOrder =({goodarray})=>{
 
 
+
+
+        console.log('Inside InsertOrder function'+order);
+        const db=getFirestore()
+            const orderDb=db.collection('orders')
+        orderDb.add(order).then(({id})=>
+            {
+                setOrderid(id); //SUCESS
+            }).catch(err=>{
+                    setError(err);
+                }).finally(()=>{
+
+                });
+
+
+        alert("Enhorabuena su pedido ha sido ingresado, correo de confirmación sera enviado a la brevedad");
+    }
+
+
+
+         ListTemplate=goodarray.map((element)=>(<tr key={element.id}><td>{element.name}</td><td>{element.cantidad}</td><td>{element.price}</td><td><DelButton itemid={id}/></td></tr>));
+
+console.log("goodarray:"+goodarray[0].id);
         return (
         <>
        <Table striped bordered hover variant='dark'>
@@ -84,7 +136,34 @@ i++;
     <td>{total()}</td>
     </tr>
   </tbody>
-</Table>
+            </Table>
+
+
+
+
+
+
+
+
+            <div id='test5'  align='center'>
+                <label label style={{ color: 'white' }}>Ingresa nombre para procesar tu compra:</label>
+  <br />
+      <input type = 'text' name = 'name'    onChange={evt => onNameChange(evt)} ></input>
+  <br />
+      <label label style={{ color: 'white' }}>Ingresa Fono para procesar tu compra:</label>
+  <br />
+      <input type = 'text' name = 'phone'    onChange={evt => onPhoneChange(evt)} ></input>
+  <br />
+      <label label style={{ color: 'white' }}>Ingresa correo para finalizar Compra:</label>
+  <br />
+                    <input type = 'text' name = 'email'    onChange={evt => onEmailChange(evt)} ></input>
+  <br />
+  <br />
+
+  <Button type='submit' variant='outline-secondary'    disabled={!(name !== "" && phone !== "" && email !== "")}  onClick={()=>InsertOrder({goodarray})}>Finalizar tu Compra</Button>
+      </div>
+
+
 
 
 
@@ -95,7 +174,7 @@ i++;
     {
         return(
 
-            <Badge variant="secondary">Vuestro Carro se encuentra vacio por favor escoger items
+            <Badge variant='secondary'>Vuestro Carro se encuentra vacio por favor escoger items
 
 
                 <Link  to={'/categories'}>
@@ -115,5 +194,3 @@ i++;
 
 
 export default Cart;
-
-
